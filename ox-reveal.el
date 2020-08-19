@@ -31,8 +31,8 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'ox-html)
-(eval-when-compile (require 'cl))
 
 (defun frag-style (frag)
   "Return \"fragment\" if frag is t, which indicates to use
@@ -105,7 +105,8 @@ default fragment style, otherwise return \"fragment style\"."
 (defcustom org-reveal-root "./reveal.js"
   "The root directory of reveal.js packages. It is the directory
   within which js/reveal.js is."
-  :group 'org-export-reveal)
+  :group 'org-export-reveal
+  :type 'string)
 
 (defcustom org-reveal-hlevel 1
   "The minimum level of headings that should be grouped into
@@ -816,7 +817,7 @@ transformed fragment attribute to ELEM's attr_html plist."
           (cond
            ((and (string= elem-type 'plain-list)
                  (char-equal (string-to-char frag-attr) ?\())
-            (mapcar*
+            (cl-mapcar
              (lambda (item frag)
                "Overwrite item's `:checkbox' property with
                reveal's fragment attribute."
@@ -850,15 +851,15 @@ transformed fragment attribute to ELEM's attr_html plist."
 
     ; export filename_client HTML file if multiplexing
     (setq client-multiplex nil)
-    (setq retfile (org-export-to-file 'reveal file
-                    async subtreep visible-only body-only ext-plist))
+    (let ((retfile (org-export-to-file 'reveal file
+                     async subtreep visible-only body-only ext-plist)))
 
-    ; export the client HTML file if client-multiplex is set true
-    ; by previous call to org-export-to-file
-    (if (eq client-multiplex t)
-        (org-export-to-file 'reveal clientfile
-          async subtreep visible-only body-only ext-plist))
-    (cond (t retfile))))
+      ;; export the client HTML file if client-multiplex is set true by
+      ;; previous call to org-export-to-file
+      (if (eq client-multiplex t)
+          (org-export-to-file 'reveal clientfile
+            async subtreep visible-only body-only ext-plist))
+      (cond (t retfile)))))
 
 (defun org-reveal-export-to-html-and-browse
   (&optional async subtreep visible-only body-only ext-plist)
